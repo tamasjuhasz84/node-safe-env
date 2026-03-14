@@ -241,6 +241,7 @@ export type CreateEnvOptions = {
   nodeEnv?: string;
   envFile?: string;
   strict?: boolean;
+  debug?: boolean | EnvDebugOptions;
 };
 
 export type EnvValueSource =
@@ -254,6 +255,44 @@ export type EnvTraceEntry = {
   source: EnvValueSource;
   raw: string;
   parsed: unknown;
+};
+
+export type EnvDebugSource = EnvValueSource | "default" | "missing";
+
+export type EnvDebugStatus =
+  | "parsed"
+  | "defaulted"
+  | "missing"
+  | "empty"
+  | "issue";
+
+export type EnvDebugDefaultKind = "static" | "function";
+
+export type EnvDebugLoadedFile = {
+  source: Exclude<EnvValueSource, "process.env">;
+  path?: string;
+  keyCount: number;
+};
+
+export type EnvDebugKeyEntry = {
+  key: string;
+  ruleType: EnvRule["type"];
+  source: EnvDebugSource;
+  usedDefault: boolean;
+  defaultKind?: EnvDebugDefaultKind;
+  raw?: string;
+  parsed?: unknown;
+  status: EnvDebugStatus;
+  issue?: EnvValidationIssue;
+};
+
+export type EnvDebugReport = {
+  loadedFiles: EnvDebugLoadedFile[];
+  keys: EnvDebugKeyEntry[];
+};
+
+export type EnvDebugOptions = {
+  logger?: (report: EnvDebugReport) => void;
 };
 
 export type ValidateExampleEnvFileOptions = {
