@@ -1,14 +1,14 @@
-import { describe, it, expect } from "vitest";
-import { validatorRegistry } from "../src/validators/registry";
+import { describe, expect, it } from "vitest";
+import { validators } from "../src/validators";
 
-describe("validatorRegistry", () => {
+describe("validators registry", () => {
   it("contains all built-in validators", () => {
-    expect(validatorRegistry.string).toBeTypeOf("function");
-    expect(validatorRegistry.number).toBeTypeOf("function");
-    expect(validatorRegistry.boolean).toBeTypeOf("function");
-    expect(validatorRegistry.enum).toBeTypeOf("function");
-    expect(validatorRegistry.url).toBeTypeOf("function");
-    expect(validatorRegistry.port).toBeTypeOf("function");
-    expect(validatorRegistry.json).toBeTypeOf("function");
+    expect(validators.string).toBeTypeOf("function");
+    expect(validators.number).toBeTypeOf("function");
+    expect(validators.boolean).toBeTypeOf("function");
+    expect(validators.enum).toBeTypeOf("function");
+    expect(validators.url).toBeTypeOf("function");
+    expect(validators.port).toBeTypeOf("function");
+    expect(validators.json).toBeTypeOf("function");
   });
 });

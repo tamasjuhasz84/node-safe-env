@@ -56,6 +56,8 @@ export type EnvRule =
   | BooleanRule
   | EnumRule<readonly string[]>
   | UrlRule
+  | IntRule
+  | FloatRule
   | PortRule
   | JsonRule;
 
@@ -75,7 +77,11 @@ type RuleOutput<R extends EnvRule> = R extends StringRule
             ? number
             : R extends JsonRule
               ? unknown
-              : never;
+              : R extends IntRule
+                ? number
+                : R extends FloatRule
+                  ? number
+                  : never;
 
 type IsAlwaysPresent<R extends EnvRule> = R extends { required: true }
   ? true
@@ -113,4 +119,12 @@ export type CreateEnvOptions = {
   cwd?: string;
   nodeEnv?: string;
   envFile?: string;
+};
+
+export type IntRule = BaseRule<number> & {
+  type: "int";
+};
+
+export type FloatRule = BaseRule<number> & {
+  type: "float";
 };

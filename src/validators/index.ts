@@ -1,11 +1,13 @@
-import { validateString } from "./string";
-import { validateNumber } from "./number";
 import { validateBoolean } from "./boolean";
 import { validateEnum } from "./enum";
-import { validateUrl } from "./url";
-import { validatePort } from "./port";
 import { validateJson } from "./json";
+import { validateNumber } from "./number";
+import { validatePort } from "./port";
+import { validateString } from "./string";
+import { validateUrl } from "./url";
 import type { EnvValidator } from "./types";
+import { validateInt } from "./int";
+import { validateFloat } from "./float";
 
 export const validators = {
   string: validateString,
@@ -15,6 +17,18 @@ export const validators = {
   url: validateUrl,
   port: validatePort,
   json: validateJson,
-} satisfies Record<string, EnvValidator>;
+  int: validateInt,
+  float: validateFloat,
+} as const satisfies {
+  string: EnvValidator;
+  number: EnvValidator;
+  boolean: EnvValidator;
+  enum: EnvValidator;
+  url: EnvValidator;
+  port: EnvValidator;
+  json: EnvValidator;
+  int: EnvValidator;
+  float: EnvValidator;
+};
 
 export type { ParseResult, EnvValidator } from "./types";
