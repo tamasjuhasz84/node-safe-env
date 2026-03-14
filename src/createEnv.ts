@@ -1,8 +1,10 @@
 import { EnvValidationError } from "./errors/EnvValidationError";
 import { findUnknownEnvKeys } from "./findUnknownEnvKeys";
+import { flattenSchema } from "./flattenSchema";
 import { loadEnvFiles } from "./loadEnvFiles";
 import { mergeSources } from "./mergeSources";
 import { parseValue } from "./parseValue";
+import { setNestedValue } from "./setNestedValue";
 import type {
   CreateEnvOptions,
   EnvSchema,
@@ -30,57 +32,60 @@ export function createEnv<S extends EnvSchema>(
     );
 
   const issues: EnvValidationIssue[] = [];
-  const result: Partial<Record<keyof S, unknown>> = {};
+  const result: Record<string, unknown> = {};
+  const flattenedSchema = flattenSchema(schema as Record<string, unknown>);
 
   if (options.strict) {
-    issues.push(...findUnknownEnvKeys(schema, source));
+    issues.push(
+      ...findUnknownEnvKeys(schema as Record<string, unknown>, source),
+    );
   }
 
-  for (const key of Object.keys(schema) as Array<keyof S>) {
-    const rule = schema[key];
-    const currentValue = source[String(key)];
+  for (const entry of flattenedSchema) {
+    const { path, envKey, rule } = entry;
+    const currentValue = source[envKey];
 
     if (typeof currentValue !== "string") {
       if (rule.default !== undefined) {
-        result[key] = rule.default;
+        setNestedValue(result, path, rule.default);
         continue;
       }
 
       if (rule.required) {
         issues.push({
-          key: String(key),
+          key: envKey,
           code: "missing",
-          message: `Missing required environment variable "${String(key)}".`,
+          message: `Missing required environment variable "${envKey}".`,
         });
       }
 
       continue;
     }
 
-    const rawValue: string = currentValue;
+    const rawValue = currentValue;
 
     if (!rule.allowEmpty && isEmptyString(rawValue)) {
       if (rule.default !== undefined) {
-        result[key] = rule.default;
+        setNestedValue(result, path, rule.default);
         continue;
       }
 
       issues.push({
-        key: String(key),
+        key: envKey,
         code: "empty",
-        message: `Environment variable "${String(key)}" cannot be empty.`,
+        message: `Environment variable "${envKey}" cannot be empty.`,
       });
       continue;
     }
 
-    const parsed = parseValue(String(key), rawValue, rule);
+    const parsed = parseValue(envKey, rawValue, rule);
 
     if (parsed.issue) {
       issues.push(parsed.issue);
       continue;
     }
 
-    result[key] = parsed.value;
+    setNestedValue(result, path, parsed.value);
   }
 
   if (issues.length > 0) {

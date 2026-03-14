@@ -8,7 +8,9 @@ export type EnvValidationIssueCode =
   | "invalid_port"
   | "invalid_json"
   | "invalid_custom"
-  | "unknown_key";
+  | "unknown_key"
+  | "missing_example_key"
+  | "unknown_example_key";
 
 export type EnvValidationIssue = {
   key: string;
@@ -85,7 +87,11 @@ export type EnvRule =
   | ArrayRule
   | CustomRule;
 
-export type EnvSchema = Record<string, EnvRule>;
+export type EnvSchemaNode = {
+  [key: string]: EnvRule | EnvSchemaNode;
+};
+
+export type EnvSchema = EnvSchemaNode;
 
 export type RuleOutput<R extends EnvRule> = R extends StringRule
   ? string
@@ -111,6 +117,8 @@ export type RuleOutput<R extends EnvRule> = R extends StringRule
                       ? TOutput
                       : never;
 
+export type InferRuleOutput<R extends EnvRule> = RuleOutput<R>;
+
 type IsAlwaysPresent<R extends EnvRule> = R extends { required: true }
   ? true
   : R extends { default: unknown }
@@ -118,13 +126,21 @@ type IsAlwaysPresent<R extends EnvRule> = R extends { required: true }
     : false;
 
 export type ParsedEnv<S extends EnvSchema> = {
-  [K in keyof S as IsAlwaysPresent<S[K]> extends true ? K : never]: RuleOutput<
-    S[K]
-  >;
+  [K in keyof S as S[K] extends EnvRule
+    ? IsAlwaysPresent<S[K]> extends true
+      ? K
+      : never
+    : K]: S[K] extends EnvRule
+    ? RuleOutput<S[K]>
+    : S[K] extends EnvSchema
+      ? ParsedEnv<S[K]>
+      : never;
 } & {
-  [K in keyof S as IsAlwaysPresent<S[K]> extends true ? never : K]?: RuleOutput<
-    S[K]
-  >;
+  [K in keyof S as S[K] extends EnvRule
+    ? IsAlwaysPresent<S[K]> extends true
+      ? never
+      : K
+    : never]?: S[K] extends EnvRule ? RuleOutput<S[K]> : never;
 };
 
 export type EnvSource = Record<string, string | undefined>;

@@ -3,6 +3,7 @@ export { EnvValidationError } from "./errors/EnvValidationError";
 export { maskEnv } from "./maskEnv";
 export { mergeSources } from "./mergeSources";
 export { traceEnv } from "./traceEnv";
+export { validateExampleEnv } from "./validateExampleEnv";
 
 export type {
   EnvSchema,

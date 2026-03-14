@@ -1,10 +1,11 @@
-import type { EnvSchema, EnvSource, EnvValidationIssue } from "./types/schema";
+import { flattenSchema } from "./flattenSchema";
+import type { EnvSource, EnvValidationIssue } from "./types/schema";
 
 export function findUnknownEnvKeys(
-  schema: EnvSchema,
+  schema: Record<string, unknown>,
   source: EnvSource,
 ): EnvValidationIssue[] {
-  const knownKeys = new Set(Object.keys(schema));
+  const knownKeys = new Set(flattenSchema(schema).map((entry) => entry.envKey));
   const issues: EnvValidationIssue[] = [];
 
   for (const key of Object.keys(source)) {
