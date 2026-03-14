@@ -16,6 +16,22 @@ function isEmptyString(value: string): boolean {
   return value.trim() === "";
 }
 
+function defaultToRawValue(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return JSON.stringify(value);
+}
+
 export function createEnv<S extends EnvSchema>(
   schema: S,
   options: CreateEnvOptions = {},
@@ -47,7 +63,18 @@ export function createEnv<S extends EnvSchema>(
 
     if (typeof currentValue !== "string") {
       if (rule.default !== undefined) {
-        setNestedValue(result, path, rule.default);
+        const parsedDefault = parseValue(
+          envKey,
+          defaultToRawValue(rule.default),
+          rule,
+        );
+
+        if (parsedDefault.issue) {
+          issues.push(parsedDefault.issue);
+          continue;
+        }
+
+        setNestedValue(result, path, parsedDefault.value);
         continue;
       }
 
@@ -66,7 +93,18 @@ export function createEnv<S extends EnvSchema>(
 
     if (!rule.allowEmpty && isEmptyString(rawValue)) {
       if (rule.default !== undefined) {
-        setNestedValue(result, path, rule.default);
+        const parsedDefault = parseValue(
+          envKey,
+          defaultToRawValue(rule.default),
+          rule,
+        );
+
+        if (parsedDefault.issue) {
+          issues.push(parsedDefault.issue);
+          continue;
+        }
+
+        setNestedValue(result, path, parsedDefault.value);
         continue;
       }
 

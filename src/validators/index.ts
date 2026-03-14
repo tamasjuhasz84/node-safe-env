@@ -10,6 +10,8 @@ import { validateInt } from "./int";
 import { validateFloat } from "./float";
 import { validateArray } from "./array";
 import { validateCustom } from "./custom";
+import { validateEmail } from "./email";
+import { validateDate } from "./date";
 
 export const validators = {
   string: validateString,
@@ -23,6 +25,8 @@ export const validators = {
   float: validateFloat,
   array: validateArray,
   custom: validateCustom,
+  email: validateEmail,
+  date: validateDate,
 } as const satisfies {
   string: EnvValidator;
   number: EnvValidator;
@@ -35,6 +39,8 @@ export const validators = {
   float: EnvValidator;
   array: EnvValidator;
   custom: EnvValidator;
+  email: EnvValidator;
+  date: EnvValidator;
 };
 
 export type { ParseResult, EnvValidator } from "./types";

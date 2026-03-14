@@ -8,6 +8,8 @@ export type EnvValidationIssueCode =
   | "invalid_port"
   | "invalid_json"
   | "invalid_custom"
+  | "invalid_email"
+  | "invalid_date"
   | "unknown_key"
   | "missing_example_key"
   | "unknown_example_key";
@@ -74,6 +76,14 @@ export type CustomRule<TOutput = unknown> = BaseRule<TOutput, TOutput> & {
   parse: (rawValue: string) => TOutput;
 };
 
+export type EmailRule = BaseRule<string, string> & {
+  type: "email";
+};
+
+export type DateRule = BaseRule<string | Date, Date> & {
+  type: "date";
+};
+
 export type EnvRule =
   | StringRule
   | NumberRule
@@ -85,7 +95,9 @@ export type EnvRule =
   | PortRule
   | JsonRule
   | ArrayRule
-  | CustomRule;
+  | CustomRule
+  | EmailRule
+  | DateRule;
 
 export type EnvSchemaNode = {
   [key: string]: EnvRule | EnvSchemaNode;
@@ -113,9 +125,13 @@ export type RuleOutput<R extends EnvRule> = R extends StringRule
                   ? number
                   : R extends ArrayRule
                     ? string[]
-                    : R extends CustomRule<infer TOutput>
-                      ? TOutput
-                      : never;
+                    : R extends EmailRule
+                      ? string
+                      : R extends DateRule
+                        ? Date
+                        : R extends CustomRule<infer TOutput>
+                          ? TOutput
+                          : never;
 
 export type InferRuleOutput<R extends EnvRule> = RuleOutput<R>;
 
