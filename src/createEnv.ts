@@ -1,4 +1,5 @@
 import { EnvValidationError } from "./errors/EnvValidationError";
+import { findUnknownEnvKeys } from "./findUnknownEnvKeys";
 import { loadEnvFiles } from "./loadEnvFiles";
 import { mergeSources } from "./mergeSources";
 import { parseValue } from "./parseValue";
@@ -30,6 +31,10 @@ export function createEnv<S extends EnvSchema>(
 
   const issues: EnvValidationIssue[] = [];
   const result: Partial<Record<keyof S, unknown>> = {};
+
+  if (options.strict) {
+    issues.push(...findUnknownEnvKeys(schema, source));
+  }
 
   for (const key of Object.keys(schema) as Array<keyof S>) {
     const rule = schema[key];

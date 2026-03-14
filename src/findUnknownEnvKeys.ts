@@ -1,0 +1,27 @@
+import type { EnvSchema, EnvSource, EnvValidationIssue } from "./types/schema";
+
+export function findUnknownEnvKeys(
+  schema: EnvSchema,
+  source: EnvSource,
+): EnvValidationIssue[] {
+  const knownKeys = new Set(Object.keys(schema));
+  const issues: EnvValidationIssue[] = [];
+
+  for (const key of Object.keys(source)) {
+    if (source[key] === undefined) {
+      continue;
+    }
+
+    if (knownKeys.has(key)) {
+      continue;
+    }
+
+    issues.push({
+      key,
+      code: "unknown_key",
+      message: `Environment variable "${key}" is not defined in the schema.`,
+    });
+  }
+
+  return issues;
+}

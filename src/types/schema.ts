@@ -7,7 +7,8 @@ export type EnvValidationIssueCode =
   | "invalid_url"
   | "invalid_port"
   | "invalid_json"
-  | "invalid_custom";
+  | "invalid_custom"
+  | "unknown_key";
 
 export type EnvValidationIssue = {
   key: string;
@@ -20,6 +21,7 @@ type BaseRule<TDefault = unknown, TOutput = TDefault> = {
   default?: TDefault;
   allowEmpty?: boolean;
   transform?: (value: TOutput) => TOutput;
+  sensitive?: boolean;
 };
 
 export type StringRule = BaseRule<string, string> & {
@@ -145,4 +147,18 @@ export type CreateEnvOptions = {
   cwd?: string;
   nodeEnv?: string;
   envFile?: string;
+  strict?: boolean;
+};
+
+export type EnvValueSource =
+  | "process.env"
+  | ".env"
+  | ".env.local"
+  | ".env.environment"
+  | "custom";
+
+export type EnvTraceEntry = {
+  source: EnvValueSource;
+  raw: string;
+  parsed: unknown;
 };
