@@ -13,7 +13,7 @@
   "author": "Tomi",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tamasjuhasz84/node-safe-env.git"
+    "url": "git+https://github.com/tamasjuhasz84/node-safe-env.git"
   },
   "homepage": "https://github.com/tamasjuhasz84/node-safe-env#readme",
   "bugs": {
@@ -24,7 +24,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "node-safe-env": "./dist/cli.js"
+    "node-safe-env": "dist/cli.js"
   },
   "exports": {
     ".": {
