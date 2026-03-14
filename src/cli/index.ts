@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 
+import { pathToFileURL } from "node:url";
 import { parseArgs } from "./utils/parseArgs";
 import { runValidateCommand } from "./commands/validate";
 import { runValidateExampleCommand } from "./commands/validateExample";
 
-function printHelp(): void {
-  console.log(`node-safe-env CLI
+type CliIO = {
+  log: (message: string) => void;
+  error: (message: string) => void;
+};
+
+function printHelp(io: CliIO): void {
+  io.log(`node-safe-env CLI
 
 Usage:
   node-safe-env validate --schema <path> [--cwd <path>] [--env-file <path>] [--node-env <value>] [--strict]
@@ -34,51 +40,66 @@ function getStringFlag(
   return typeof value === "string" ? value : undefined;
 }
 
-async function main(): Promise<void> {
-  const parsed = parseArgs(process.argv.slice(2));
+export async function runCli(
+  argv: string[],
+  io: CliIO = {
+    log: console.log,
+    error: console.error,
+  },
+): Promise<number> {
+  const parsed = parseArgs(argv);
 
   if (!parsed.command || parsed.flags.help || parsed.command === "help") {
-    printHelp();
-    process.exitCode = 0;
-    return;
+    printHelp(io);
+    return 0;
   }
 
   const schemaPath = getStringFlag(parsed.flags, "schema");
 
   if (!schemaPath) {
-    console.error('Missing required flag "--schema".\n');
-    printHelp();
-    process.exitCode = 1;
-    return;
+    io.error('Missing required flag "--schema".\n');
+    printHelp(io);
+    return 1;
   }
 
   if (parsed.command === "validate") {
-    const exitCode = await runValidateCommand({
+    return runValidateCommand({
       schemaPath,
       cwd: getStringFlag(parsed.flags, "cwd"),
       envFile: getStringFlag(parsed.flags, "env-file"),
       nodeEnv: getStringFlag(parsed.flags, "node-env"),
       strict: parsed.flags.strict === true,
     });
-
-    process.exitCode = exitCode;
-    return;
   }
 
   if (parsed.command === "validate-example") {
-    const exitCode = await runValidateExampleCommand({
+    return runValidateExampleCommand({
       schemaPath,
       cwd: getStringFlag(parsed.flags, "cwd"),
       exampleFile: getStringFlag(parsed.flags, "example-file"),
     });
-
-    process.exitCode = exitCode;
-    return;
   }
 
-  console.error(`Unknown command "${parsed.command}".\n`);
-  printHelp();
-  process.exitCode = 1;
+  io.error(`Unknown command "${parsed.command}".\n`);
+  printHelp(io);
+  return 1;
 }
 
-void main();
+async function main(): Promise<void> {
+  const exitCode = await runCli(process.argv.slice(2));
+  process.exitCode = exitCode;
+}
+
+function isDirectRun(): boolean {
+  const entry = process.argv[1];
+
+  if (!entry) {
+    return false;
+  }
+
+  return import.meta.url === pathToFileURL(entry).href;
+}
+
+if (isDirectRun()) {
+  void main();
+}
