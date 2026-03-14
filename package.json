@@ -1,0 +1,60 @@
+{
+  "name": "node-safe-env",
+  "version": "0.1.0",
+  "description": "A tiny schema-based env loader and validator for Node.js.",
+  "keywords": [
+    "env",
+    "dotenv",
+    "config",
+    "validator",
+    "node"
+  ],
+  "license": "MIT",
+  "author": "Tomi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tamasjuhasz84/node-safe-env.git"
+  },
+  "homepage": "https://github.com/tamasjuhasz84/node-safe-env#readme",
+  "bugs": {
+    "url": "https://github.com/tamasjuhasz84/node-safe-env/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "check": "npm run lint && npm run build && npm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "eslint": "^9.39.4",
+    "globals": "^17.4.0",
+    "prettier": "^3.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.57.0",
+    "vitest": "^3.0.0"
+  }
+}
