@@ -9,6 +9,7 @@ import type { EnvValidator } from "./types";
 import { validateInt } from "./int";
 import { validateFloat } from "./float";
 import { validateArray } from "./array";
+import { validateCustom } from "./custom";
 
 export const validators = {
   string: validateString,
@@ -21,6 +22,7 @@ export const validators = {
   int: validateInt,
   float: validateFloat,
   array: validateArray,
+  custom: validateCustom,
 } as const satisfies {
   string: EnvValidator;
   number: EnvValidator;
@@ -32,6 +34,7 @@ export const validators = {
   int: EnvValidator;
   float: EnvValidator;
   array: EnvValidator;
+  custom: EnvValidator;
 };
 
 export type { ParseResult, EnvValidator } from "./types";

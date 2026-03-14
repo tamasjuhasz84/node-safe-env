@@ -6,7 +6,8 @@ export type EnvValidationIssueCode =
   | "invalid_boolean"
   | "invalid_url"
   | "invalid_port"
-  | "invalid_json";
+  | "invalid_json"
+  | "invalid_custom";
 
 export type EnvValidationIssue = {
   key: string;
@@ -60,7 +61,8 @@ export type EnvRule =
   | FloatRule
   | PortRule
   | JsonRule
-  | ArrayRule;
+  | ArrayRule
+  | CustomRule;
 
 export type EnvSchema = Record<string, EnvRule>;
 
@@ -84,7 +86,9 @@ type RuleOutput<R extends EnvRule> = R extends StringRule
                   ? number
                   : R extends ArrayRule
                     ? string[]
-                    : never;
+                    : R extends CustomRule<infer TOutput>
+                      ? TOutput
+                      : never;
 
 type IsAlwaysPresent<R extends EnvRule> = R extends { required: true }
   ? true
@@ -135,4 +139,9 @@ export type FloatRule = BaseRule<number> & {
 export type ArrayRule = BaseRule<string[]> & {
   type: "array";
   separator?: string;
+};
+
+export type CustomRule<TOutput = unknown> = BaseRule<TOutput> & {
+  type: "custom";
+  parse: (rawValue: string) => TOutput;
 };
