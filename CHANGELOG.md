@@ -17,3 +17,4 @@
 - added `email` validator
 - added `date` validator
 - defaults are now parsed through the same validation pipeline before being added to the final output
+- added CLI with `validate` and `validate-example` commands

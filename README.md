@@ -375,6 +375,41 @@ npm run check
 
 ---
 
+## CLI
+
+`node-safe-env` includes a small CLI for validation workflows.
+
+### Validate environment files
+
+```bash
+node-safe-env validate --schema ./dist/env.schema.js
+```
+
+### Validate `.env.example`
+
+```bash
+node-safe-env validate-example --schema ./dist/env.schema.js
+```
+
+### Options
+
+#### `validate`
+
+- `--schema <path>`
+- `--cwd <path>`
+- `--env-file <path>`
+- `--node-env <value>`
+- `--strict`
+
+#### `validate-example`
+
+- `--schema <path>`
+- `--cwd <path>`
+- `--example-file <path>`
+
+Note: the CLI currently expects a runnable JavaScript schema module.
+For example, use a built `.js`, `.mjs`, or `.cjs` file rather than a raw `.ts` file.
+
 ## Compatibility
 
 - Node.js >=18
