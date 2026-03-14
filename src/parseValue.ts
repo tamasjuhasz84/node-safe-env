@@ -1,3 +1,4 @@
+import { applyTransform } from "./applyTransform";
 import type { EnvRule } from "./types/schema";
 import { validators } from "./validators";
 import type { ParseResult } from "./validators";
@@ -9,9 +10,11 @@ export function parseValue(
 ): ParseResult {
   const validator = validators[rule.type];
 
-  return validator({
+  const result = validator({
     key,
     rawValue,
     rule,
   });
+
+  return applyTransform(key, rule, result);
 }

@@ -15,40 +15,59 @@ export type EnvValidationIssue = {
   message: string;
 };
 
-type BaseRule<TDefault = unknown> = {
+type BaseRule<TDefault = unknown, TOutput = TDefault> = {
   required?: boolean;
   default?: TDefault;
   allowEmpty?: boolean;
+  transform?: (value: TOutput) => TOutput;
 };
 
-export type StringRule = BaseRule<string> & {
+export type StringRule = BaseRule<string, string> & {
   type: "string";
 };
 
-export type NumberRule = BaseRule<number> & {
+export type NumberRule = BaseRule<number, number> & {
   type: "number";
 };
 
-export type BooleanRule = BaseRule<boolean> & {
+export type BooleanRule = BaseRule<boolean, boolean> & {
   type: "boolean";
 };
 
 export type EnumRule<TValues extends readonly string[] = readonly string[]> =
-  BaseRule<TValues[number]> & {
+  BaseRule<TValues[number], TValues[number]> & {
     type: "enum";
     values: TValues;
   };
 
-export type UrlRule = BaseRule<string> & {
+export type UrlRule = BaseRule<string, string> & {
   type: "url";
 };
 
-export type PortRule = BaseRule<number> & {
+export type PortRule = BaseRule<number, number> & {
   type: "port";
 };
 
-export type JsonRule = BaseRule<unknown> & {
+export type JsonRule = BaseRule<unknown, unknown> & {
   type: "json";
+};
+
+export type IntRule = BaseRule<number, number> & {
+  type: "int";
+};
+
+export type FloatRule = BaseRule<number, number> & {
+  type: "float";
+};
+
+export type ArrayRule = BaseRule<string[], string[]> & {
+  type: "array";
+  separator?: string;
+};
+
+export type CustomRule<TOutput = unknown> = BaseRule<TOutput, TOutput> & {
+  type: "custom";
+  parse: (rawValue: string) => TOutput;
 };
 
 export type EnvRule =
@@ -66,7 +85,7 @@ export type EnvRule =
 
 export type EnvSchema = Record<string, EnvRule>;
 
-type RuleOutput<R extends EnvRule> = R extends StringRule
+export type RuleOutput<R extends EnvRule> = R extends StringRule
   ? string
   : R extends NumberRule
     ? number
@@ -126,22 +145,4 @@ export type CreateEnvOptions = {
   cwd?: string;
   nodeEnv?: string;
   envFile?: string;
-};
-
-export type IntRule = BaseRule<number> & {
-  type: "int";
-};
-
-export type FloatRule = BaseRule<number> & {
-  type: "float";
-};
-
-export type ArrayRule = BaseRule<string[]> & {
-  type: "array";
-  separator?: string;
-};
-
-export type CustomRule<TOutput = unknown> = BaseRule<TOutput> & {
-  type: "custom";
-  parse: (rawValue: string) => TOutput;
 };
