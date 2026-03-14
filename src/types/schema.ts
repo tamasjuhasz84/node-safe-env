@@ -7,9 +7,11 @@ export type EnvValidationIssueCode =
   | "invalid_url"
   | "invalid_port"
   | "invalid_json"
+  | "invalid_array"
   | "invalid_custom"
   | "invalid_email"
   | "invalid_date"
+  | "invalid_default"
   | "unknown_key"
   | "missing_example_key"
   | "unknown_example_key";
@@ -22,7 +24,7 @@ export type EnvValidationIssue = {
 
 type BaseRule<TDefault = unknown, TOutput = TDefault> = {
   readonly required?: boolean;
-  readonly default?: TDefault;
+  readonly default?: TDefault | (() => TDefault);
   readonly allowEmpty?: boolean;
   readonly transform?: (value: TOutput) => TOutput;
   readonly sensitive?: boolean;
@@ -69,6 +71,8 @@ export type FloatRule = BaseRule<number, number> & {
 export type ArrayRule = BaseRule<string[], string[]> & {
   readonly type: "array";
   readonly separator?: string;
+  readonly trimItems?: boolean;
+  readonly allowEmptyItems?: boolean;
 };
 
 export type CustomRule<TOutput = unknown> = BaseRule<TOutput, TOutput> & {

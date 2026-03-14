@@ -7,6 +7,7 @@ import { parseValue } from "./parseValue";
 import { setNestedValue } from "./setNestedValue";
 import type {
   CreateEnvOptions,
+  EnvRule,
   EnvSchema,
   EnvValidationIssue,
   ParsedEnv,
@@ -30,6 +31,32 @@ function defaultToRawValue(value: unknown): string {
   }
 
   return JSON.stringify(value);
+}
+
+function resolveDefaultValue(value: unknown): unknown {
+  return typeof value === "function" ? (value as () => unknown)() : value;
+}
+
+function parseDefaultValue(
+  envKey: string,
+  rule: EnvRule,
+): ReturnType<typeof parseValue> {
+  let resolvedDefault: unknown;
+
+  try {
+    resolvedDefault = resolveDefaultValue(rule.default);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      issue: {
+        key: envKey,
+        code: "invalid_default",
+        message: `Default function for "${envKey}" threw an error: ${message}`,
+      },
+    };
+  }
+
+  return parseValue(envKey, defaultToRawValue(resolvedDefault), rule);
 }
 
 export function createEnv<S extends EnvSchema>(
@@ -63,11 +90,7 @@ export function createEnv<S extends EnvSchema>(
 
     if (typeof currentValue !== "string") {
       if (rule.default !== undefined) {
-        const parsedDefault = parseValue(
-          envKey,
-          defaultToRawValue(rule.default),
-          rule,
-        );
+        const parsedDefault = parseDefaultValue(envKey, rule);
 
         if (parsedDefault.issue) {
           issues.push(parsedDefault.issue);
@@ -93,11 +116,7 @@ export function createEnv<S extends EnvSchema>(
 
     if (!rule.allowEmpty && isEmptyString(rawValue)) {
       if (rule.default !== undefined) {
-        const parsedDefault = parseValue(
-          envKey,
-          defaultToRawValue(rule.default),
-          rule,
-        );
+        const parsedDefault = parseDefaultValue(envKey, rule);
 
         if (parsedDefault.issue) {
           issues.push(parsedDefault.issue);
