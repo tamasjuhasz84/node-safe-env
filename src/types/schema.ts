@@ -21,67 +21,67 @@ export type EnvValidationIssue = {
 };
 
 type BaseRule<TDefault = unknown, TOutput = TDefault> = {
-  required?: boolean;
-  default?: TDefault;
-  allowEmpty?: boolean;
-  transform?: (value: TOutput) => TOutput;
-  sensitive?: boolean;
+  readonly required?: boolean;
+  readonly default?: TDefault;
+  readonly allowEmpty?: boolean;
+  readonly transform?: (value: TOutput) => TOutput;
+  readonly sensitive?: boolean;
 };
 
 export type StringRule = BaseRule<string, string> & {
-  type: "string";
+  readonly type: "string";
 };
 
 export type NumberRule = BaseRule<number, number> & {
-  type: "number";
+  readonly type: "number";
 };
 
 export type BooleanRule = BaseRule<boolean, boolean> & {
-  type: "boolean";
+  readonly type: "boolean";
 };
 
 export type EnumRule<TValues extends readonly string[] = readonly string[]> =
   BaseRule<TValues[number], TValues[number]> & {
-    type: "enum";
-    values: TValues;
+    readonly type: "enum";
+    readonly values: TValues;
   };
 
 export type UrlRule = BaseRule<string, string> & {
-  type: "url";
+  readonly type: "url";
 };
 
 export type PortRule = BaseRule<number, number> & {
-  type: "port";
+  readonly type: "port";
 };
 
 export type JsonRule = BaseRule<unknown, unknown> & {
-  type: "json";
+  readonly type: "json";
 };
 
 export type IntRule = BaseRule<number, number> & {
-  type: "int";
+  readonly type: "int";
 };
 
 export type FloatRule = BaseRule<number, number> & {
-  type: "float";
+  readonly type: "float";
 };
 
 export type ArrayRule = BaseRule<string[], string[]> & {
-  type: "array";
-  separator?: string;
+  readonly type: "array";
+  readonly separator?: string;
 };
 
 export type CustomRule<TOutput = unknown> = BaseRule<TOutput, TOutput> & {
-  type: "custom";
-  parse: (rawValue: string) => TOutput;
+  readonly type: "custom";
+  readonly parse: (rawValue: string) => TOutput;
 };
 
 export type EmailRule = BaseRule<string, string> & {
-  type: "email";
+  readonly type: "email";
 };
 
 export type DateRule = BaseRule<string | Date, Date> & {
-  type: "date";
+  readonly type: "date";
 };
 
 export type EnvRule =
@@ -100,7 +100,7 @@ export type EnvRule =
   | DateRule;
 
 export type EnvSchemaNode = {
-  [key: string]: EnvRule | EnvSchemaNode;
+  readonly [key: string]: EnvRule | EnvSchemaNode;
 };
 
 export type EnvSchema = EnvSchemaNode;
@@ -135,28 +135,85 @@ export type RuleOutput<R extends EnvRule> = R extends StringRule
 
 export type InferRuleOutput<R extends EnvRule> = RuleOutput<R>;
 
-type IsAlwaysPresent<R extends EnvRule> = R extends { required: true }
+type IsAlwaysPresent<
+  R extends { readonly required?: boolean; readonly default?: unknown },
+> = R extends { readonly required: true }
   ? true
-  : R extends { default: unknown }
+  : R extends { readonly default: unknown }
     ? true
     : false;
 
-export type ParsedEnv<S extends EnvSchema> = {
-  [K in keyof S as S[K] extends EnvRule
-    ? IsAlwaysPresent<S[K]> extends true
-      ? K
-      : never
-    : K]: S[K] extends EnvRule
-    ? RuleOutput<S[K]>
-    : S[K] extends EnvSchema
-      ? ParsedEnv<S[K]>
+type IsRuleLike<T> = T extends { readonly type: string } ? true : false;
+
+type RuleOutputFrom<T> = T extends { readonly type: "string" }
+  ? string
+  : T extends { readonly type: "number" }
+    ? number
+    : T extends { readonly type: "boolean" }
+      ? boolean
+      : T extends {
+            readonly type: "enum";
+            readonly values: readonly (infer TValue)[];
+          }
+        ? TValue & string
+        : T extends { readonly type: "url" }
+          ? string
+          : T extends { readonly type: "port" }
+            ? number
+            : T extends { readonly type: "json" }
+              ? unknown
+              : T extends { readonly type: "int" }
+                ? number
+                : T extends { readonly type: "float" }
+                  ? number
+                  : T extends { readonly type: "array" }
+                    ? string[]
+                    : T extends { readonly type: "email" }
+                      ? string
+                      : T extends { readonly type: "date" }
+                        ? Date
+                        : T extends {
+                              readonly type: "custom";
+                              readonly parse: (
+                                rawValue: string,
+                              ) => infer TOutput;
+                            }
+                          ? TOutput
+                          : never;
+
+type NodeOutput<T> =
+  IsRuleLike<T> extends true
+    ? RuleOutputFrom<T>
+    : T extends Record<string, unknown>
+      ? ParsedEnv<T>
       : never;
+
+type HasGuaranteedDescendant<T> =
+  IsRuleLike<T> extends true
+    ? IsAlwaysPresent<
+        T & { readonly required?: boolean; readonly default?: unknown }
+      >
+    : T extends Record<string, unknown>
+      ? true extends {
+          [K in keyof T]: HasGuaranteedDescendant<T[K]>;
+        }[keyof T]
+        ? true
+        : false
+      : false;
+
+type RequiredParsedKeys<S extends Record<string, unknown>> = {
+  [K in keyof S]-?: HasGuaranteedDescendant<S[K]> extends true ? K : never;
+}[keyof S];
+
+type OptionalParsedKeys<S extends Record<string, unknown>> = Exclude<
+  keyof S,
+  RequiredParsedKeys<S>
+>;
+
+export type ParsedEnv<S extends Record<string, unknown>> = {
+  [K in RequiredParsedKeys<S>]: NodeOutput<S[K]>;
 } & {
-  [K in keyof S as S[K] extends EnvRule
-    ? IsAlwaysPresent<S[K]> extends true
-      ? never
-      : K
-    : never]?: S[K] extends EnvRule ? RuleOutput<S[K]> : never;
+  [K in OptionalParsedKeys<S>]?: NodeOutput<S[K]>;
 };
 
 export type EnvSource = Record<string, string | undefined>;

@@ -1,4 +1,5 @@
 export { createEnv } from "./createEnv";
+export { defineEnv } from "./defineEnv";
 export { EnvValidationError } from "./errors/EnvValidationError";
 export { maskEnv } from "./maskEnv";
 export { mergeSources } from "./mergeSources";
