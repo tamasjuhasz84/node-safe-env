@@ -9,5 +9,9 @@ export function parseValue(
 ): ParseResult {
   const validator = validators[rule.type];
 
-  return validator(key, rawValue, rule);
+  return validator({
+    key,
+    rawValue,
+    rule,
+  });
 }

@@ -1,6 +1,6 @@
 import type { EnvValidator } from "./types";
 
-export const validatePort: EnvValidator = (key, rawValue) => {
+export const validatePort: EnvValidator = ({ key, rawValue }) => {
   const num = Number(rawValue);
 
   if (!Number.isInteger(num) || num < 1 || num > 65535) {

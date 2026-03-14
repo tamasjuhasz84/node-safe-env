@@ -1,6 +1,6 @@
 import type { EnvValidator } from "./types";
 
-export const validateFloat: EnvValidator = (key, rawValue) => {
+export const validateFloat: EnvValidator = ({ key, rawValue }) => {
   const parsed = Number(rawValue);
 
   if (!Number.isFinite(parsed)) {

@@ -59,7 +59,8 @@ export type EnvRule =
   | IntRule
   | FloatRule
   | PortRule
-  | JsonRule;
+  | JsonRule
+  | ArrayRule;
 
 export type EnvSchema = Record<string, EnvRule>;
 
@@ -81,7 +82,9 @@ type RuleOutput<R extends EnvRule> = R extends StringRule
                 ? number
                 : R extends FloatRule
                   ? number
-                  : never;
+                  : R extends ArrayRule
+                    ? string[]
+                    : never;
 
 type IsAlwaysPresent<R extends EnvRule> = R extends { required: true }
   ? true
@@ -127,4 +130,9 @@ export type IntRule = BaseRule<number> & {
 
 export type FloatRule = BaseRule<number> & {
   type: "float";
+};
+
+export type ArrayRule = BaseRule<string[]> & {
+  type: "array";
+  separator?: string;
 };

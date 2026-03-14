@@ -1,6 +1,6 @@
 import type { EnvValidator } from "./types";
 
-export const validateJson: EnvValidator = (key, rawValue) => {
+export const validateJson: EnvValidator = ({ key, rawValue }) => {
   try {
     const parsed = JSON.parse(rawValue);
 

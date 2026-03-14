@@ -8,6 +8,7 @@ import { validateUrl } from "./url";
 import type { EnvValidator } from "./types";
 import { validateInt } from "./int";
 import { validateFloat } from "./float";
+import { validateArray } from "./array";
 
 export const validators = {
   string: validateString,
@@ -19,6 +20,7 @@ export const validators = {
   json: validateJson,
   int: validateInt,
   float: validateFloat,
+  array: validateArray,
 } as const satisfies {
   string: EnvValidator;
   number: EnvValidator;
@@ -29,6 +31,7 @@ export const validators = {
   json: EnvValidator;
   int: EnvValidator;
   float: EnvValidator;
+  array: EnvValidator;
 };
 
 export type { ParseResult, EnvValidator } from "./types";

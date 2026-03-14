@@ -1,6 +1,6 @@
 import type { EnvValidator } from "./types";
 
-export const validateUrl: EnvValidator = (key, rawValue) => {
+export const validateUrl: EnvValidator = ({ key, rawValue }) => {
   try {
     new URL(rawValue);
 

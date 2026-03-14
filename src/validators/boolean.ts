@@ -3,7 +3,7 @@ import type { EnvValidator } from "./types";
 const TRUE_VALUES = new Set(["true", "1", "yes", "on"]);
 const FALSE_VALUES = new Set(["false", "0", "no", "off"]);
 
-export const validateBoolean: EnvValidator = (key, rawValue) => {
+export const validateBoolean: EnvValidator = ({ key, rawValue }) => {
   const normalized = rawValue.trim().toLowerCase();
 
   if (TRUE_VALUES.has(normalized)) {

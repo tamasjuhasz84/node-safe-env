@@ -5,8 +5,10 @@ export type ParseResult = {
   issue?: EnvValidationIssue;
 };
 
-export type EnvValidator = (
-  key: string,
-  rawValue: string,
-  rule: EnvRule,
-) => ParseResult;
+export type ValidatorContext = {
+  key: string;
+  rawValue: string;
+  rule: EnvRule;
+};
+
+export type EnvValidator = (context: ValidatorContext) => ParseResult;
