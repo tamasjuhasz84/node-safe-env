@@ -61,5 +61,51 @@ export function parseValue(
 
       return { value: rawValue };
     }
+
+    case "url": {
+      try {
+        new URL(rawValue);
+        return { value: rawValue };
+      } catch {
+        return {
+          issue: {
+            key,
+            code: "invalid_url",
+            message: `Environment variable "${key}" must be a valid URL.`,
+          },
+        };
+      }
+    }
+
+    case "port": {
+      const num = Number(rawValue);
+
+      if (!Number.isInteger(num) || num < 1 || num > 65535) {
+        return {
+          issue: {
+            key,
+            code: "invalid_port",
+            message: `Environment variable "${key}" must be a valid port (1–65535).`,
+          },
+        };
+      }
+
+      return { value: num };
+    }
+
+    case "json": {
+      try {
+        const parsed = JSON.parse(rawValue);
+        return { value: parsed };
+      } catch {
+        return {
+          issue: {
+            key,
+            code: "invalid_json",
+            message: `Environment variable "${key}" must contain valid JSON.`,
+          },
+        };
+      }
+    }
   }
 }

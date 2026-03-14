@@ -3,7 +3,10 @@ export type EnvValidationIssueCode =
   | "empty"
   | "invalid_enum"
   | "invalid_number"
-  | "invalid_boolean";
+  | "invalid_boolean"
+  | "invalid_url"
+  | "invalid_port"
+  | "invalid_json";
 
 export type EnvValidationIssue = {
   key: string;
@@ -35,11 +38,26 @@ export type EnumRule<TValues extends readonly string[] = readonly string[]> =
     values: TValues;
   };
 
+export type UrlRule = BaseRule<string> & {
+  type: "url";
+};
+
+export type PortRule = BaseRule<number> & {
+  type: "port";
+};
+
+export type JsonRule = BaseRule<unknown> & {
+  type: "json";
+};
+
 export type EnvRule =
   | StringRule
   | NumberRule
   | BooleanRule
-  | EnumRule<readonly string[]>;
+  | EnumRule<readonly string[]>
+  | UrlRule
+  | PortRule
+  | JsonRule;
 
 export type EnvSchema = Record<string, EnvRule>;
 
@@ -51,7 +69,13 @@ type RuleOutput<R extends EnvRule> = R extends StringRule
       ? boolean
       : R extends EnumRule<infer TValues>
         ? TValues[number]
-        : never;
+        : R extends UrlRule
+          ? string
+          : R extends PortRule
+            ? number
+            : R extends JsonRule
+              ? unknown
+              : never;
 
 type IsAlwaysPresent<R extends EnvRule> = R extends { required: true }
   ? true

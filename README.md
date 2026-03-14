@@ -1,6 +1,7 @@
 # node-safe-env
 
 Schema-based environment loading and validation for Node.js.
+Parse, validate, and type your environment variables with a simple schema.
 
 `node-safe-env` helps you fail fast at startup by validating environment
 variables with a typed schema. It loads values from `.env` files, merges with
@@ -11,7 +12,7 @@ all validation issues.
 
 - Validate config at boot, not at runtime
 - Keep runtime dependencies at zero
-- Parse and type env values (`string`, `number`, `boolean`, `enum`)
+- Parse and type env values (`string`, `number`, `boolean`, `enum`, `url`, `port`, `json`)
 - Aggregate all validation issues in one error
 - Ship both ESM and CommonJS builds
 
@@ -60,6 +61,28 @@ order (last one wins):
 
 ## API
 
+## Supported types
+
+`node-safe-env` currently supports the following schema types:
+
+- `string`
+- `number`
+- `boolean`
+- `enum`
+- `url`
+- `port`
+- `json`
+
+  Example:
+
+  ```ts
+  const env = createEnv({
+    API_URL: { type: "url", required: true },
+    PORT: { type: "port", default: 3000 },
+    FEATURE_FLAGS: { type: "json" },
+  });
+  ```
+
 ### `createEnv(schema, options?)`
 
 Build and validate a typed env object.
@@ -75,7 +98,7 @@ const env = createEnv(schema, {
 
 ### Schema rule fields
 
-- `type`: `"string" | "number" | "boolean" | "enum"`
+- `type`: `"string" | "number" | "boolean" | "enum" | "url" | "port" | "json"`
 - `required?`: throw `missing` issue when value is not provided
 - `default?`: fallback value when missing (or empty if `allowEmpty !== true`)
 - `allowEmpty?`: allow empty or whitespace-only strings
@@ -148,7 +171,7 @@ Helpful scripts:
 
 Planned extensions:
 
-- New rule types: `url`, `port`, `json`, `array`
+- `array` type support
 - Strict mode for unknown keys and source auditing
 - Custom validators and custom issue messages
 - Optional async source loaders
