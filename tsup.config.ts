@@ -20,8 +20,5 @@ export default defineConfig([
     clean: false,
     target: "node18",
     minify: false,
-    banner: {
-      js: "#!/usr/bin/env node",
-    },
   },
 ]);

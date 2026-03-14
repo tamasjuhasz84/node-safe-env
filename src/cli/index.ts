@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { pathToFileURL } from "node:url";
 import { parseArgs } from "./utils/parseArgs";
 import { runValidateCommand } from "./commands/validate";
 import { runValidateExampleCommand } from "./commands/validateExample";
@@ -49,7 +48,12 @@ export async function runCli(
 ): Promise<number> {
   const parsed = parseArgs(argv);
 
-  if (!parsed.command || parsed.flags.help || parsed.command === "help") {
+  if (
+    !parsed.command ||
+    parsed.flags.help ||
+    parsed.command === "help" ||
+    parsed.command === "--help"
+  ) {
     printHelp(io);
     return 0;
   }
@@ -90,16 +94,4 @@ async function main(): Promise<void> {
   process.exitCode = exitCode;
 }
 
-function isDirectRun(): boolean {
-  const entry = process.argv[1];
-
-  if (!entry) {
-    return false;
-  }
-
-  return import.meta.url === pathToFileURL(entry).href;
-}
-
-if (isDirectRun()) {
-  void main();
-}
+void main();
