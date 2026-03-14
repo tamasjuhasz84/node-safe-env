@@ -178,3 +178,8 @@ export type EnvTraceEntry = {
   raw: string;
   parsed: unknown;
 };
+
+export type ValidateExampleEnvFileOptions = {
+  cwd?: string;
+  exampleFile?: string;
+};
