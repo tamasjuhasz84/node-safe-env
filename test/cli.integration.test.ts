@@ -6,6 +6,9 @@ const fixturesDir = fileURLToPath(new URL("./fixtures/cli", import.meta.url));
 const validateSchemaPath = fileURLToPath(
   new URL("./fixtures/cli/validate.schema.ts", import.meta.url),
 );
+const validateSchemaJsPath = fileURLToPath(
+  new URL("./fixtures/cli/validate.schema.js", import.meta.url),
+);
 const exampleSchemaPath = fileURLToPath(
   new URL("./fixtures/cli/example.schema.ts", import.meta.url),
 );
@@ -14,6 +17,41 @@ const invalidSchemaPath = fileURLToPath(
 );
 
 describe("CLI integration", () => {
+  it("--help prints usage and exits successfully", async () => {
+    const logs: string[] = [];
+    const errors: string[] = [];
+
+    const exitCode = await runCli(["--help"], {
+      log: (message) => logs.push(message),
+      error: (message) => errors.push(message),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(errors).toHaveLength(0);
+
+    const combinedLogs = logs.join("\n");
+    expect(combinedLogs).toContain("Usage:");
+    expect(combinedLogs).toContain(".js, .mjs, .cjs, .ts, .mts, .cts");
+    expect(combinedLogs).toContain("named export: schema");
+    expect(combinedLogs).toContain(
+      "node-safe-env validate --schema ./env.schema.ts",
+    );
+  });
+
+  it("help command prints usage and exits successfully", async () => {
+    const logs: string[] = [];
+    const errors: string[] = [];
+
+    const exitCode = await runCli(["help"], {
+      log: (message) => logs.push(message),
+      error: (message) => errors.push(message),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(errors).toHaveLength(0);
+    expect(logs.join("\n")).toContain("Usage:");
+  });
+
   it("validate succeeds with a valid schema and env setup", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const errorSpy = vi
@@ -27,6 +65,33 @@ describe("CLI integration", () => {
         "validate",
         "--schema",
         validateSchemaPath,
+      ]);
+
+      expect(exitCode).toBe(0);
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Environment validation passed"),
+      );
+      expect(errorSpy).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+    }
+  });
+
+  it("validate succeeds with a JavaScript schema module", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    vi.stubEnv("ADMIN_EMAIL", "admin@example.com");
+
+    try {
+      const exitCode = await runCli([
+        "validate",
+        "--schema",
+        validateSchemaJsPath,
       ]);
 
       expect(exitCode).toBe(0);
@@ -87,7 +152,7 @@ describe("CLI integration", () => {
     }
   });
 
-  it("validate-example succeeds for a valid example file", async () => {
+  it("validate-example succeeds for a valid example file with a TypeScript schema", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const errorSpy = vi
       .spyOn(console, "error")
@@ -184,6 +249,31 @@ describe("CLI integration", () => {
       expect(combinedErrors).toContain(
         'must export a schema as default export or named export "schema"',
       );
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it("fails with a useful message when schema file is missing", async () => {
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    try {
+      const exitCode = await runCli([
+        "validate",
+        "--schema",
+        "./test/fixtures/cli/does-not-exist.schema.ts",
+      ]);
+
+      expect(exitCode).toBe(1);
+
+      const combinedErrors = errorSpy.mock.calls
+        .map((call) => String(call[0]))
+        .join("\n");
+
+      expect(combinedErrors).toContain("CLI error:");
+      expect(combinedErrors).toContain("Schema file not found:");
     } finally {
       errorSpy.mockRestore();
     }

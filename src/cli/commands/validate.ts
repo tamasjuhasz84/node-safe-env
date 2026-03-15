@@ -1,6 +1,7 @@
 import { createEnv } from "../../createEnv";
 import { EnvValidationError } from "../../errors/EnvValidationError";
 import { formatIssues } from "../utils/formatIssues";
+import { formatCliError } from "../utils/formatCliError";
 import { loadSchemaModule } from "../utils/loadSchemaModule";
 
 export type ValidateCommandOptions = {
@@ -33,9 +34,7 @@ export async function runValidateCommand(
       return 1;
     }
 
-    const message =
-      error instanceof Error ? error.message : "Unknown CLI error";
-    console.error(`CLI error: ${message}`);
+    console.error(formatCliError(error));
     return 1;
   }
 }

@@ -21,13 +21,22 @@ Commands:
   validate-example   Validate a .env.example file against a schema
 
 Options:
-  --schema <path>        Path to schema module
+  --schema <path>        Path to schema module (.js, .mjs, .cjs, .ts, .mts, .cts)
   --cwd <path>           Working directory for env file loading
   --env-file <path>      Custom env file path for validate
   --node-env <value>     NODE_ENV override for validate
   --strict               Enable strict mode for unknown keys
   --example-file <path>  Custom example file path for validate-example
   --help                 Show this help
+
+Schema module exports:
+  - default export
+  - named export: schema
+
+Examples:
+  node-safe-env validate --schema ./env.schema.ts
+  node-safe-env validate-example --schema ./env.schema.ts
+  node-safe-env validate --schema ./dist/env.schema.js --strict
 `);
 }
 

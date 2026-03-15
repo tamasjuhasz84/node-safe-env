@@ -1,10 +1,25 @@
 # node-safe-env
 
-Schema-based environment loading and validation for Node.js.
+Schema-based environment validation for Node.js and TypeScript.
 
-`node-safe-env` helps you fail fast at startup by validating environment variables
-with a typed schema, parsing values into runtime types, and reporting all validation
-issues in one error.
+`node-safe-env` helps you fail fast at startup: validate env variables, parse them into typed runtime values, and get all validation issues in one clear error report.
+
+## Why node-safe-env?
+
+- Fail-fast startup validation: catch config mistakes before your app starts serving traffic.
+- Typed parsing: parse strings from `.env` and `process.env` into `number`, `boolean`, `Date`, arrays, and more.
+- Aggregated errors: see all invalid/missing values at once.
+- CLI validation: validate your env setup from scripts and CI.
+- `.env.example` validation: keep examples aligned with your schema.
+- Debug tracing: inspect where each value came from and how it was parsed.
+
+## Try It Now
+
+```bash
+npx node-safe-env --help
+npx node-safe-env validate --schema ./env.schema.ts
+npx node-safe-env validate-example --schema ./env.schema.ts
+```
 
 ## Install
 
@@ -13,6 +28,8 @@ npm install node-safe-env
 ```
 
 ## Quick Start
+
+Define a schema:
 
 ```ts
 import { createEnv, defineEnv } from "node-safe-env";
@@ -27,7 +44,11 @@ const schema = defineEnv({
     default: "development",
   },
 } as const);
+```
 
+Use it at runtime:
+
+```ts
 const env = createEnv(schema);
 
 env.APP_NAME; // string
@@ -36,9 +57,25 @@ env.DEBUG; // boolean
 env.NODE_ENV; // "development" | "test" | "production"
 ```
 
-## `defineEnv()`
+What this gives you:
 
-`defineEnv()` locks schema literal types with a single top-level `as const`. Use it when you want to export or reuse a schema across modules.
+- `required: true` means the value must exist.
+- `default` is used when a value is missing.
+- `type` controls parsing and validation.
+- returned `env` is strongly typed from your schema.
+
+## What Is a Schema in node-safe-env?
+
+A schema is an object where each key maps to a rule object.
+
+Each rule describes:
+
+- what type the value should be (`type`)
+- whether it must be present (`required`)
+- what to use if missing (`default`)
+- optional rule-specific settings (for example enum values, array options, custom parser)
+
+Use `defineEnv()` when you want better literal type inference and reusable exported schema modules.
 
 ```ts
 // env.schema.ts
@@ -50,17 +87,90 @@ export const schema = defineEnv({
 } as const);
 ```
 
-```ts
-// main.ts
-import { createEnv } from "node-safe-env";
-import { schema } from "./env.schema.js";
+## CLI
 
-const env = createEnv(schema);
+`node-safe-env` includes:
+
+- `validate`: validate current environment values against your schema
+- `validate-example`: validate `.env.example` coverage against your schema
+
+```bash
+node-safe-env validate --schema ./env.schema.ts
+node-safe-env validate-example --schema ./env.schema.ts
+node-safe-env validate --schema ./dist/env.schema.js --strict
 ```
+
+### CLI schema files
+
+The `--schema` module supports both JavaScript and TypeScript files:
+
+- JavaScript: `.js`, `.mjs`, `.cjs`
+- TypeScript: `.ts`, `.mts`, `.cts`
+
+Accepted export shapes:
+
+- default export
+- named export `schema`
+
+## `.env.example` Validation
+
+Validate a real file:
+
+```ts
+import { validateExampleEnvFile } from "node-safe-env";
+
+const issues = validateExampleEnvFile(schema, {
+  cwd: process.cwd(),
+  exampleFile: ".env.example",
+});
+```
+
+Validate an in-memory object:
+
+```ts
+import { validateExampleEnv } from "node-safe-env";
+
+const issues = validateExampleEnv(schema, {
+  PORT: "",
+});
+```
+
+## Common Use Cases
+
+- App startup validation: load and validate env once during bootstrap.
+- CI checks for `.env.example`: fail PRs when required keys are missing or stale.
+- Debugging source issues: use debug/tracing output to understand where values were loaded from.
+
+## Value at a Glance
+
+`node-safe-env` is a schema-based env validator with:
+
+- TypeScript-friendly schema inference
+- CLI commands for runtime and `.env.example` validation
+- structured, aggregated validation errors
+- source tracing and debug visibility
+
+## Rule Types
+
+Supported `type` values:
+
+- `string`
+- `number`
+- `boolean`
+- `enum`
+- `url`
+- `port`
+- `json`
+- `int`
+- `float`
+- `array`
+- `email`
+- `date`
+- `custom`
 
 ## Nested Schemas
 
-Schemas can be nested. Input env keys are flattened using uppercase segments joined by `_`.
+Schemas can be nested. Env keys are flattened with `_` between segments.
 
 ```ts
 const env = createEnv({
@@ -78,14 +188,9 @@ SERVER_PORT=4000
 DATABASE_URL=postgres://localhost:5432/app
 ```
 
-```ts
-env.server.port; // number
-env.database.url; // string
-```
-
 ## Loading Order
 
-When `options.source` is not provided, values are loaded and merged in this order (last one wins):
+When `options.source` is not provided, values are merged in this order (last wins):
 
 1. `.env`
 2. `.env.local`
@@ -93,102 +198,7 @@ When `options.source` is not provided, values are loaded and merged in this orde
 4. custom file from `options.envFile`
 5. `process.env`
 
-## Supported Rule Types
-
-- `string`
-- `number`
-- `boolean`
-- `enum`
-- `url`
-- `port`
-- `json`
-- `int`
-- `float`
-- `array`
-- `email`
-- `date`
-- `custom`
-
-## Email Rule
-
-```ts
-const env = createEnv({
-  ADMIN_EMAIL: { type: "email", required: true },
-});
-```
-
-## Date Rule
-
-`date` parses ISO-compatible values into `Date`.
-
-```ts
-const env = createEnv({
-  START_DATE: { type: "date", required: true },
-});
-
-env.START_DATE; // Date
-```
-
-## Custom Rule
-
-Supply a `parse` function that returns the typed value or throws for invalid input.
-
-```ts
-const env = createEnv({
-  RETRY_DELAY_MS: {
-    type: "custom",
-    parse: (raw) => {
-      const n = Number(raw);
-      if (!Number.isInteger(n) || n < 0)
-        throw new Error("Must be a non-negative integer.");
-      return n;
-    },
-  },
-});
-
-env.RETRY_DELAY_MS; // number
-```
-
-If `parse` throws, `createEnv` records an `invalid_custom` validation issue with the thrown message.
-
-## Array Rule Options
-
-Array parsing supports separator and item controls.
-
-```ts
-const env = createEnv({
-  ALLOWED_HOSTS: {
-    type: "array",
-    separator: "|", // default: ","
-    trimItems: false, // default: true
-    allowEmptyItems: true, // default: false
-  },
-});
-```
-
-Defaults:
-
-- `separator`: `","`
-- `trimItems`: `true`
-- `allowEmptyItems`: `false`
-
-## Defaults (Static and Functional)
-
-Defaults go through the same parse/validation pipeline as environment input.
-
-```ts
-const env = createEnv({
-  PORT: { type: "port", default: 3000 },
-  START_DATE: { type: "date", default: () => "2026-01-01" },
-  ADMIN_EMAIL: { type: "email", default: () => "admin@example.com" },
-});
-```
-
-If a functional default throws, `createEnv` returns a structured `invalid_default` validation issue.
-
 ## Debug Mode
-
-Enable debug reporting during `createEnv` execution.
 
 ```ts
 import { createEnv, type EnvDebugReport } from "node-safe-env";
@@ -202,18 +212,11 @@ createEnv(schema, {
 });
 ```
 
-Also supported:
+Or:
 
 ```ts
-createEnv(schema, { debug: true }); // emits one report via console.info
+createEnv(schema, { debug: true });
 ```
-
-Debug reports include:
-
-- loaded file metadata (`loadedFiles`)
-- per-key entries (`keys`) with source, status, default usage, and issue details
-
-Sensitive rules (`sensitive: true`) are masked as `"***"` in debug `raw` and `parsed` fields.
 
 ## Strict Mode
 
@@ -221,99 +224,7 @@ Sensitive rules (`sensitive: true`) are masked as `"***"` in debug `raw` and `pa
 createEnv(schema, { strict: true });
 ```
 
-Strict mode reports unknown environment keys as validation issues.
-
-## Masking Sensitive Values
-
-Use `maskEnv()` to sanitize parsed env output for logs.
-
-```ts
-import { createEnv, maskEnv } from "node-safe-env";
-
-const schema = {
-  API_TOKEN: { type: "string", required: true, sensitive: true },
-  PORT: { type: "port", default: 3000 },
-} as const;
-
-const env = createEnv(schema);
-const safeEnv = maskEnv(schema, env);
-```
-
-## Source Tracing
-
-Use `traceEnv()` when you have a source map of raw values and origin labels.
-
-```ts
-import { traceEnv } from "node-safe-env";
-
-const trace = traceEnv(
-  {
-    PORT: { type: "port" },
-  },
-  {
-    PORT: { source: "process.env", raw: "3000" },
-  },
-  {
-    PORT: 3000,
-  },
-);
-```
-
-## `.env.example` Validation
-
-Validate an example file against your schema:
-
-```ts
-import { validateExampleEnvFile } from "node-safe-env";
-
-const issues = validateExampleEnvFile(schema, {
-  cwd: process.cwd(),
-  exampleFile: ".env.example",
-});
-```
-
-Or validate an in-memory object:
-
-```ts
-import { validateExampleEnv } from "node-safe-env";
-
-const issues = validateExampleEnv(schema, {
-  PORT: "",
-});
-```
-
-## CLI
-
-`node-safe-env` includes a CLI with two commands.
-
-```bash
-# installed locally (package.json scripts or npx)
-node-safe-env validate --schema ./dist/env.schema.js
-node-safe-env validate-example --schema ./dist/env.schema.js
-
-# one-off with npx
-npx node-safe-env validate --schema ./dist/env.schema.js
-```
-
-`validate` options:
-
-- `--schema <path>` (required)
-- `--cwd <path>`
-- `--env-file <path>`
-- `--node-env <value>`
-- `--strict`
-
-`validate-example` options:
-
-- `--schema <path>` (required)
-- `--cwd <path>`
-- `--example-file <path>`
-
-CLI schema loading note:
-
-- the `--schema` target must be an executable JavaScript module
-- accepted export shapes: default export or named export `schema`
-- use built `.js`, `.mjs`, or `.cjs` files for CLI usage
+Strict mode reports unknown environment keys as issues.
 
 ## Error Handling
 
@@ -346,7 +257,7 @@ Exports:
 - `readEnvFileSource`
 - `resolveExampleEnvPath`
 
-`createEnv(schema, options?)` options:
+`createEnv(schema, options?)`:
 
 ```ts
 {
@@ -365,7 +276,7 @@ Exports:
 - ESM and CommonJS builds
 - TypeScript declarations included
 
-## Development Scripts
+## Development
 
 ```bash
 npm run lint
